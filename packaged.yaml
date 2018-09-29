@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: An Amazon S3 trigger that uses rekognition APIs to detect faces
+Resources:
+  BucketFaces:
+    Type: AWS::S3::Bucket
+  BucketImage:
+    Type: AWS::S3::Bucket
+  Table:
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: faceId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: faceId
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+    Type: AWS::DynamoDB::Table
+  facecollectionjs:
+    Properties:
+      CodeUri: s3://s3-deploymentbucket-missing-persons/0b34a9ab54dad6ca3e443f5872f5ef00
+      Description: An Amazon S3 trigger that uses rekognition APIs to detect faces
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: Table
+      Events:
+        FaceCollectionBucketEvent:
+          Properties:
+            Bucket:
+              Ref: BucketFaces
+            Events:
+            - s3:ObjectCreated:*
+          Type: S3
+      Handler: facecollection.handler
+      MemorySize: 128
+      Policies:
+      - Statement:
+        - Action:
+          - s3:GetObject
+          Effect: Allow
+          Resource: arn:aws:s3:::*
+        - Action:
+          - rekognition:CompareFaces
+          - rekognition:DetectFaces
+          - rekognition:DetectLabels
+          Effect: Allow
+          Resource: '*'
+        - Action:
+          - rekognition:CreateCollection
+          - rekognition:IndexFaces
+          Effect: Allow
+          Resource: '*'
+        - Action:
+          - dynamodb:PutItem
+          - dynamodb:UpdateItem
+          Effect: Allow
+          Resource: '*'
+        Version: '2012-10-17'
+      Runtime: nodejs8.10
+      Timeout: 3
+    Type: AWS::Serverless::Function
+  searchfacejs:
+    Properties:
+      CodeUri: s3://s3-deploymentbucket-missing-persons/0b34a9ab54dad6ca3e443f5872f5ef00
+      Description: An Amazon S3 trigger that uses rekognition APIs to detect faces
+      Events:
+        SearchCollectionBucketEvent:
+          Properties:
+            Bucket:
+              Ref: BucketImage
+            Events:
+            - s3:ObjectCreated:*
+          Type: S3
+      Handler: searchcollection.handler
+      MemorySize: 128
+      Policies:
+      - Statement:
+        - Action:
+          - s3:GetObject
+          Effect: Allow
+          Resource: arn:aws:s3:::*
+        - Action:
+          - rekognition:CompareFaces
+          - rekognition:DetectFaces
+          - rekognition:DetectLabels
+          Effect: Allow
+          Resource: '*'
+        - Action:
+          - rekognition:ListFaces
+          - rekognition:SearchFacesByImage
+          Effect: Allow
+          Resource: '*'
+        Version: '2012-10-17'
+      Runtime: nodejs8.10
+      Timeout: 3
+    Type: AWS::Serverless::Function
+Transform: AWS::Serverless-2016-10-31

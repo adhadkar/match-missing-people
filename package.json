@@ -1,0 +1,25 @@
+{
+  "name": "match-missing-people",
+  "version": "1.0.0",
+  "description": "Match missing people via face recognition",
+  "main": "app.js",
+  "scripts": {
+    "test": "mocha --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adhadkar/match-missing-people.git"
+  },
+  "keywords": [
+    "aws",
+    "sam",
+    "serverless",
+    "rekognition"
+  ],
+  "author": "adhadkar",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/adhadkar/match-missing-people/issues"
+  },
+  "homepage": "https://github.com/adhadkar/match-missing-people#readme"
+}

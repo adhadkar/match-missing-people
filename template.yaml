@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An Amazon S3 trigger that uses rekognition APIs to detect faces
+Resources:
+  facecollectionjs:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: handlers/facecollection.handler
+      Runtime: nodejs8.10
+      CodeUri: .
+      Description: An Amazon S3 trigger that uses rekognition APIs to detect faces
+      MemorySize: 128
+      # Timeout: 3
+      Environment: 
+        Variables: 
+          TABLE_NAME: 
+            Ref: Table
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - 's3:GetObject'
+              Resource: 'arn:aws:s3:::*'
+            - Effect: Allow
+              Action:
+                - 'rekognition:CompareFaces'
+                - 'rekognition:DetectFaces'
+                - 'rekognition:DetectLabels'
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - 'rekognition:CreateCollection'
+                - 'rekognition:IndexFaces'
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - 'dynamodb:PutItem'
+                - 'dynamodb:UpdateItem'
+              Resource: '*'
+      Events:
+        FaceCollectionBucketEvent:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: BucketFaces
+            Events:
+              - 's3:ObjectCreated:*'
+  BucketFaces:
+    Type: 'AWS::S3::Bucket'
+  
+  Table:
+    Type: AWS::DynamoDB::Table    
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: faceId
+          AttributeType: S
+      KeySchema:
+        -
+          AttributeName: faceId
+          KeyType: HASH
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+ 
+  searchfacejs:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: handlers/searchcollection.handler
+      Runtime: nodejs8.10
+      CodeUri: .
+      Description: An Amazon S3 trigger that uses rekognition APIs to detect faces
+      MemorySize: 128
+      # Timeout: 3
+      # Environment: 
+      #   Variables: 
+      #     TABLE_NAME: 
+      #       Ref: Table
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - 's3:GetObject'
+              Resource: 'arn:aws:s3:::*'
+            - Effect: Allow
+              Action:
+                - 'rekognition:CompareFaces'
+                - 'rekognition:DetectFaces'
+                - 'rekognition:DetectLabels'
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - 'rekognition:ListFaces'
+                - 'rekognition:SearchFacesByImage'
+              Resource: '*'
+      Events:
+        SearchCollectionBucketEvent:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: BucketImage
+            Events:
+              - 's3:ObjectCreated:*'
+  BucketImage:
+    Type: 'AWS::S3::Bucket'  
